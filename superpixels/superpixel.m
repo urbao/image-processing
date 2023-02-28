@@ -11,7 +11,7 @@ imshow(image);
 title('Original');
 
 % using matlab built-in superpixels function
-Pixels_num=500;  %break image into Pixels_num parts
+Pixels_num=2500;  %break image into Pixels_num parts
 [L, Label_num]=superpixels(image, Pixels_num, NumIterations=10);
 % BI is Boundary-Image
 BI=boundarymask(L); % use boundarymask() to output the superpixels 
