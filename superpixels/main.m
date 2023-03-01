@@ -9,10 +9,10 @@ filename=fullfile(path, file);
 image=imread(filename);
 subplot(1,3,1); % output the original image with subplot function (the left one)
 imshow(image);
-title('Original');
+title("Original");
 
 % using matlab built-in superpixels function
-Pixels_num=7500;  %break image into Pixels_num parts
+Pixels_num=5000;  %break image into Pixels_num parts
 [L, Label_num]=superpixels(image, Pixels_num, NumIterations=10);
 
 % BI is Boundary-Image, which shows the edge of different superpixels
@@ -20,7 +20,7 @@ BI=boundarymask(L); % use boundarymask() to output the superpixels
 subplot(1,3,2);
 % using `imoverlay` function to diaplay image with red line edge
 imshow(imoverlay(image, BI, 'red'), 'InitialMagnification', 67);
-title('Boundary mask');
+title("Boundary Mask (N="+Pixels_num+")");
 
 % convert image to an array, so matlab can compute the result
 result=zeros(size(image), 'like', image);
@@ -40,4 +40,4 @@ end
 % print out the final SLIC result
 subplot(1,3,3);
 imshow(result);
-title('SLIC');
+title("SLIC result (N="+Pixels_num+")");
