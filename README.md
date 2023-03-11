@@ -1,6 +1,6 @@
 # 2023 NCKU Image Processing Homework
 
-### Including `K-means clustering`, `SLIC`... common image-processsing skills
+### Including `K-means clustering`, `SLIC`, `PCA`... common image-processsing skills
 
 ## Features
 - Each files contains a MATALAB topic code
