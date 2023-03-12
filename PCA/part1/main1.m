@@ -22,41 +22,14 @@ fprintf("Rank of X: "+rank(X)+"\n");
 
 % ---- Step 2: get mean of X and substract it from X ----
 d=mean(X, 2); % 2 means the X is 2D array
-X_centered=X-d; % X_centered means NO offset
-cov_X=cov(X_centered');
-%{
-[eigenvectors, eigenvalues]=eig(cov_X);
+X_centered=X-d; % X_centered means remove extra offset d from X
 
-[~, indices]=sort(diag(eigenvalues), 'descend');
-eigenvectors=eigenvectors(:, indices);
+% ---- Step 3: use singular value decomposition(SVD) on X
+[U, S, V]=svd(X);
+Prin_Comp=X*V;
+explaned_var=(diag(S).^2/sum(diag(S)).^2);
+cumulative_explained_var=cumsum(explaned_var);
+plot(cumulative_explained_var);
 
-C=eigenvectors(:, 1:4);
-% display C as four curves
-x=linspace(0, 1, 10);
-xi=linspace(0, 1, 10000); % cut to smaller grid for interpolation
-C_inter=zeros(length(xi), 4);
-for i=1:4
-    C_inter(:, i)=spline(x, C(:, i), xi);
-end
-figure;
-hold on;
-for i=1:4
-    plot(xi, C_inter(:, i));
-end
-xlabel('Sampling Points');
-ylabel('Value');
-title('Four orthonormal vectors in C');
-legend('Vector 1', 'Vector 2', 'Vector 3', 'Vector 4');
-
-Y=C'*(X-d');
-Xc=C*Y'+d';
-
-err=X;
-figure;
-imagesc(err);
-colormap('jet');
-colorbar;
-xlabel('Data point index');
-ylabel('Variable index');
-title('Difference between X and Xc');
-%}
+num_components_to_retain=1;
+Prin_Comp_Reduced=Prin_Comp(:, 1:num_components_to_retain);
