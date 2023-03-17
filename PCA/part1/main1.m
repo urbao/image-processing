@@ -48,7 +48,7 @@ title('Four curves of C matrix')
 X_error=X_reconstruct-X;
 figure;
 imagesc(X_error);
-colorbar;
+colorbar; % show error in map with color
 title('2D map of X-error')
 xlabel('X-axis')
 ylabel('Y-axis')
