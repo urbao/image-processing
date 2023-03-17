@@ -3,7 +3,7 @@ close all % close all opened figures and windows
 clc % clear the command window
 
 % ---- Step 1: generate disired matrix ---- 
-rk=4; % rk: desired rank of matrix
+rk=4; % rk: desired rank of matrix C
 % use while loop to make sure rank of matrix M is 4
 % since, most case A,B should be linearly independent, and their rank is 4
 % however, it might have some chance to have linearly dependent cases
@@ -25,7 +25,7 @@ d=mean(X, 2); % d means the column mean value of X
 X_centered=X-d; % X_centered means remove extra offset d from X
 
 % ---- Step 3: apply orth function to find pca(X) ----
-% in order to find 4 orthogonal basis
+% find 4 orthogonal basis
 C=orth(X_centered);
 % Compress X_centered to 4*100 Y
 Y=transpose(C)*X_centered;
