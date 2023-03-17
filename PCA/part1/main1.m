@@ -24,13 +24,9 @@ fprintf("Rank of X: "+rank(X)+"\n");
 d=mean(X, 2); % d means the column mean value of X
 X_centered=X-d; % X_centered means remove extra offset d from X
 
-% ---- Step 3: apply svd function to find pca(X) ----
-% the 'U' is orthogonal basis of original matrix X,
-% which we can use to build our 'C' in PCA
-[U, S, V]=svd(X_centered);
-% Select the first 4 columns of U to form the basis
-% U matrix is already sorted by default
-C=U(:, 1:4);
+% ---- Step 3: apply orth function to find pca(X) ----
+% in order to find 4 orthogonal basis
+C=orth(X_centered);
 % Compress X_centered to 4*100 Y
 Y=transpose(C)*X_centered;
 
