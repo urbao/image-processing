@@ -3,9 +3,13 @@ close all % close all opened figures and windows
 clc % clear the command window
 
 % ---- Step 1: read the image in ----
-img=imread('rgb.jpg'); % read the image file
+img=imread('RGB.png'); % read the image file
 [height, width, RGB]=size(img); % record the size of img
-X=double(reshape(img, 3, [])); % convert img matrix into 3*L size with double value
+% convert img matrix into 3*L size with double value
+% since the img=height*width*3, in order to reshape the image to 3*L
+% first, reshape based on RGB, then do the transpose will flip the matrix
+% to 3*L form
+X=transpose(double(reshape(img, [], 3))); 
 
 % ---- Step 2: remove mean value from each column ----
 d=mean(X, 2);
@@ -17,31 +21,40 @@ C=orth_vec(:, 1:2); % choose the top two column as basis
 Y=transpose(C)*centered_X;
 
 % ---- Step 4: reconstruct data via C, Y and d ----
-X_reconstruct=(C*Y)+(d*ones([1, size(X, 2)]));
+X_reconstruct=(C*Y)+(d*ones(1, height*width));
 
 % ---- Step 5: print out the desired plot ----
 % X plot
 figure;
-image(uint8(reshape(X, height, width, RGB)));
+% before plot the image, we need to reshape back to 
+% original image size, so first transpose back to L*3, then
+% reshape it back to height*width*3
+X=reshape(transpose(X), height, width, 3);
+image(uint8(X)); % convert data back to 8-bit unsigned integer 
 title("RGB true-color composition of X");
-xlabel("Pixels");
-ylabel("Value");
+xlabel("Width");
+ylabel("Height");
 
 % Y plot
+% reshape to original image size
 figure;
-subplot(1, 2, 1);
-band1=reshape(Y(1, :), height, width);
-imshow(band1, []);
-title("Principal Component 1");
-subplot(1, 2, 2);
-band2=reshape(Y(2, :), height, width);
-imshow(band2, []);
-title("Principal Component 2");
+band1=reshape(Y(1, :), [height, width]);
+band2=reshape(Y(2, :), [height, width]);
+% convert to gray-scale
+band1=mat2gray(band1); 
+band2=mat2gray(band2);
+subplot(1,2,1);
+imshow(band1);
+title("First Band Image");
+subplot(1,2,2);
+imshow(band2);
+title("Second Band Image");
 
 
 % X_reconstruct plot
 figure;
+X_reconstruct=reshape(transpose(X_reconstruct), height, width, []);
 image(uint8(reshape(X_reconstruct, height, width, RGB)));
 title("RGB true-color composition of X-reconstruct");
-xlabel("Pixels");
-ylabel("Value");
+xlabel("Width");
+ylabel("Height");
