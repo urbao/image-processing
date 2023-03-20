@@ -3,7 +3,7 @@ close all % close all opened figures and windows
 clc % clear the command window
 
 % ---- Step 1: read the image in ----
-img=imread('parrot.jpg'); % read the image file
+img=imread('rgb.jpg'); % read the image file
 [height, width, RGB]=size(img); % record the size of img
 X=double(reshape(img, 3, [])); % convert img matrix into 3*L size with double value
 
@@ -28,14 +28,16 @@ xlabel("Pixels");
 ylabel("Value");
 
 % Y plot
+figure;
 subplot(1, 2, 1);
 band1=reshape(Y(1, :), height, width);
 imshow(band1, []);
-title("First band");
+title("Principal Component 1");
 subplot(1, 2, 2);
 band2=reshape(Y(2, :), height, width);
 imshow(band2, []);
-title("Second band");
+title("Principal Component 2");
+
 
 % X_reconstruct plot
 figure;
