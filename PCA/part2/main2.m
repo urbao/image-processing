@@ -3,7 +3,7 @@ close all % close all opened figures and windows
 clc % clear the command window
 
 % ---- Step 1: read the image in ----
-img=imread('RGB.png'); % read the image file
+img=imread('parrot.jpg'); % read the image file
 [height, width, RGB]=size(img); % record the size of img
 % convert img matrix into 3*L size with double value
 % since the img=height*width*3, in order to reshape the image to 3*L
