@@ -7,6 +7,7 @@ img=imread('quokka.jpg'); % read the image file
 [height, width, RGB]=size(img); % record the size of img
 
 % first. add some random noise to image via built-in function
+% set the noise density to 0.1
 % then, convert the image to height*L matrix
 X=imnoise(img, 'salt & pepper', 0.1);
 X=double(reshape(X, height, []));
