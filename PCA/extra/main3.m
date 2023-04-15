@@ -9,7 +9,7 @@ img=imread('quokka.jpg'); % read the image file
 % first. add some random noise to image via built-in function
 % set the noise density to 0.1
 % then, convert the image to height*L matrix
-X=imnoise(img, 'salt & pepper', 0.1);
+X=imnoise(img, 'salt & pepper');
 X=double(reshape(X, height, []));
 % find the mean value of column
 % substract of the mean from the X matrix
