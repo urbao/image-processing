@@ -1,13 +1,10 @@
-% reset all windows and cmd window
+% reset all windows and cmd window, and clear all
 clc;
 close all;
+clear all;
 
-% generate data matrix Y_omega, and set missing entries to 0
 
-% apply NMF based inpainting technique to Y_omega data matrix
-
-% stored result data matrix to Data_7.mat
-
-% calculate the Frobenius norm of |Y-Y_hat| (check if inpainting is successful)
-
-% ??? maybe record some other useful info(ex. exec time; other photos)
+% load the Nevada.mat data, and stored to variable called `Nevada`
+% p.s. Use the `whos` command to check the data is called 'X'
+load("Nevada.mat", 'X');
+Nevada=X;
