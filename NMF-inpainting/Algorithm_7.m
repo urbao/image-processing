@@ -13,7 +13,7 @@ mask_mode="random";
 % the ratio of missing entries
 % only valid when mask_mode is set to "random"
 % ratio=mask_columns/total_columns
-random_mask_ratio=0.10;
+missing_cols_ratio=0.10;
 %-------------------------------------------------------
 % the cols index which will be set to missing
 % only valid when mask_mode is set to "fixed"
@@ -37,12 +37,12 @@ mask=ones(rows, cols, bands);
 % random mode: random mask based on random_mask_ratio
 if mask_mode=="random"
     % generate random cols based on the random_mask_ratio
-    num_missing_cols=ceil(random_mask_ratio*cols);
+    num_missing_cols=ceil(missing_cols_ratio*cols);
     missing_cols=randperm(cols, num_missing_cols);
     mask(:, missing_cols, :)=0;
 %-------------------------------------------------------
 % fixed mode: mask defined by user in Line 20
-% check missing_cols validty before computing(MAX: cols, min:0)
+% check missing_cols validty before computing(MAX: cols, min:1)
 elseif mask_mode=="fixed"
     for missing_col=missing_cols
         if missing_col<1
@@ -67,4 +67,9 @@ title('Reference');
 subplot(1,2,2);
 imshow(Y(:,:,50));
 title('Corrupted');
-% output some useful information(corruptedd ratio)
+
+%=======================================================
+
+
+
+
