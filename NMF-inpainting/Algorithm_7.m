@@ -6,7 +6,7 @@ clear all;
 %% mask mode variable
 %=======================================================
 % valid: random|fixed
-mask_mode="fixed";
+mask_mode="random";
 
 %% random mode variables
 %=======================================================
@@ -120,7 +120,7 @@ missing_percentage=missing_entries/(M*L)*100;
 disp(("missing entries count: ")+missing_entries);
 disp("missing percentage: "+missing_percentage+"%");
 
-%% reformat the Y matrix into a non-zero value matrix
+%% reformat the Y_omega matrix into a non-zero value matrix
 %========================================================
 % use "any" function create logical zero_cols array
 % first check row dimension, then bands dimension
@@ -141,8 +141,15 @@ reformat_cols=size(Y_rm_stripe, 2);
 Y_rm_stripe=reshape(Y_rm_stripe, rows*reformat_cols, bands)';
 [A_est, S_est, time]=HyperCSI(Y_rm_stripe, N);
 
-%% Try to find SS, and recover to Y
-QQ=(A_est*S_est)';
-QQ=reshape(QQ, rows, reformat_cols, bands);
-subplot(1,4,4);
-imshow(QQ(:,:,[Red_band, Green_band, Blue_band]));
+%% Try to find SS_est, and recover to Y
+% first, initialize SS_est with random positive number
+Y_omega=reshape(Y_omega, rows*cols, bands)';
+SS_est=rand(N, rows*cols);
+% start applying algorithm to find SS_est
+
+
+%% Calculate the Frobenius norm of ||X-A*S||
+%========================================================
+X_recover=permute(reshape(A_est*SS_est, bands, rows, cols), [2, 3, 1]);
+frob=norm(X-X_recover, 'fro');
+disp("Frobenius Norm: "+frob);
