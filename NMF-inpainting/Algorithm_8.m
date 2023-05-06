@@ -1,12 +1,12 @@
-% reset all windows and cmd window, and clear all
+% reset all windows and cmd window, and clear workspace
 clc;
 close all;
-clear all;
+clear workspace;
 
 %% mask mode variable
 %=======================================================
 % valid: random|fixed
-mask_mode="random";
+mask_mode="fixed";
 
 %% random mode variables
 %=======================================================
@@ -33,7 +33,7 @@ corrupted_cols=[2,7,9,17,23,28,31,48,53,59,62,77,81,92,108,114,124,137,142];
 %-------------------------------------------------------
 % the bands that will be masked
 % limitation: 0 < band <= 183
-masked_bands=[3,11,18,26,42,73,89,115,127,143,156,177,182];
+masked_bands=[2,3,8,11,18,26,42,73,89,115,127,143,156,177,182];
 
 %% load the Nevada.mat data, and stored useful data
 %=======================================================
@@ -88,6 +88,7 @@ Red_band=18;
 Green_band=8;
 Blue_band=2;
 % show X and Y(masked_X)
+figure;
 subplot(1,4,1);
 imshow(X(:,:,[Red_band, Green_band, Blue_band]));
 title('Reference');
@@ -97,12 +98,15 @@ title('Corrupted');
 %-------------------------------------------------------
 % show some corrupted and masked info
 disp("corrupted_cols: "+join(string(sort(corrupted_cols)), ','));
+disp("Corrupted Column Count: "+length(corrupted_cols));
+disp("========================");
 if mask_mode=="random"
     disp("random mode has different masked_bands for each corrupted_cols")
 else
     disp("masked_bands: "+join(string(sort(masked_bands)), ','));
 end
-disp("count: "+length(corrupted_cols)+"/"+length(masked_bands));
+disp("Masked Bands Count: "+length(masked_bands));
+disp("========================");
 % show percentage of missing_data
 M=bands;
 L=rows*cols;
@@ -119,6 +123,7 @@ end
 missing_percentage=missing_entries/(M*L)*100;
 disp(("missing entries count: ")+missing_entries);
 disp("missing percentage: "+missing_percentage+"%");
+disp("========================");
 
 %% reformat the Y_omega matrix into a non-zero value matrix
 %========================================================
@@ -131,6 +136,7 @@ subplot(1,4,3);
 Y_rm_stripe=Y_omega(:, ~zero_cols, :);
 imshow(Y_rm_stripe(:,:,[Red_band, Green_band, Blue_band]));
 title("Reformat");
+
 %% Plug Y_reformat into the HyperCSI function
 %========================================================
 % count of endmembers
@@ -141,15 +147,52 @@ reformat_cols=size(Y_rm_stripe, 2);
 Y_rm_stripe=reshape(Y_rm_stripe, rows*reformat_cols, bands)';
 [A_est, S_est, time]=HyperCSI(Y_rm_stripe, N);
 
-%% Try to find SS_est, and recover to Y
-% first, initialize SS_est with random positive number
-Y_omega=reshape(Y_omega, rows*cols, bands)';
-SS_est=rand(N, rows*cols);
-% start applying algorithm to find SS_est
-
-
-%% Calculate the Frobenius norm of ||X-A*S||
+%% Try to find SS_est
 %========================================================
-X_recover=permute(reshape(A_est*SS_est, bands, rows, cols), [2, 3, 1]);
+tic;
+SS_est=zeros(N, rows*cols);
+Y_omega=reshape(Y_omega, rows*cols, bands)';
+% the following variables are used to solve SS_est coefficient
+AAA=zeros(bands,N);
+bbb=zeros(bands,1);
+eqs_counter=0;
+% run through each column of Y_omega matrix to use 
+% any non-zero value to solve SS_est
+for ii=1:rows*cols
+    for jj=1:bands
+        % since Y_omega(jj, ii) is non-zero, so save
+        % Y_omega and A_est value into bbb and AAA matrix
+        if Y_omega(jj, ii)~=0
+            bbb(eqs_counter+1, 1)=Y_omega(jj, ii);
+            for kk=1:N
+                AAA(eqs_counter+1, kk)=A_est(jj, kk);
+            end
+        end
+        % when jj=bands means all bands already recorded
+        % ,which means we can solve the SS_est coefficients
+        if jj==bands
+            sol=pinv(AAA)*bbb;
+            SS_est(:, ii)=sol;
+            % after this reset varibles, and break the loop
+            AAA=zeros(bands,N);
+            bbb=zeros(bands,1);
+            eqs_counter=0;
+        end
+    end
+end
+elapsed_time=toc;
+disp("Elapsed Time: "+elapsed_time+"s");
+
+subplot(1,4,4);
+Y=A_est*SS_est;
+Y=reshape(Y', rows, cols, bands);
+imshow(Y(:,:,[Red_band, Green_band, Blue_band]));
+title("Recover");
+
+%% Calculate the Frobenius norm of ||X-A_est*SS_est||
+%========================================================
+X_recover=A_est*SS_est;
+X_recover=reshape(X_recover', rows, cols, bands);
 frob=norm(X-X_recover, 'fro');
 disp("Frobenius Norm: "+frob);
+disp("========================");
