@@ -15,7 +15,7 @@ bands=size(Y_omega, 3);
 Red_band=18;
 Green_band=8;
 Blue_band=2;
-% show X and Y(masked_X)
+% show X and Y(masked_X)    
 subplot(1,4,1);
 imshow(X(:,:,[Red_band, Green_band, Blue_band]));
 title('Reference');
@@ -67,7 +67,7 @@ end
 %% Plug Y_reformat into the HyperCSI function
 %========================================================
 % count of endmembers
-N=6;
+N=9;
 % after removing some cols, the Y_reformat cols count changed
 reformat_cols=size(Y_rm_stripe, 2);
 % reshape Y_reformat matrix to (M*L)
@@ -81,7 +81,7 @@ for i = 1:rows*reformat_cols
 end
 
 %% reshape S_est to cubic
-
+%========================================================
 %recover data to cubic type
 S_cubic = ones(rows, cols, N);
 
@@ -103,8 +103,8 @@ while S_est_col <= size(S_est, 2)
 end
 
 %% interpolation
+%=========================================================
 %test: griddata(x, y, v, xq, yq)
-
 % create grid
 S_grid = S_cubic;
 
@@ -158,16 +158,27 @@ end
 
 
 %% recover Y
-
+%========================================================
+% replace data with having existed one
 Y = A_est * S_recover;
+Y_omega_ = reshape(Y_omega, rows*cols, bands)';
+
+for i = 1:bands
+    for j = 1:rows*cols
+        if (Y_omega_(i, j) ~= 0) && (Y_omega_(i, j) ~= Y(i, j))
+            Y(i, j) = Y_omega_(i, j);
+        end
+    end
+end
+
+%% show recovered image, and Frobenius Norm Error
+%========================================================
 elapsed_time=toc;
 disp("Elapsed Time: "+elapsed_time+"s");
 subplot(1,4,4);
 Y_show = reshape(Y', rows, cols, bands);
 imshow(Y_show(:,:,[Red_band, Green_band, Blue_band]));
 title('Recovered');
-
-
 
 X_ = reshape(X, rows*cols, bands)';
 frobenius = 0;
@@ -180,4 +191,13 @@ end
 frobenius = frobenius .^ 0.5;
 disp(("frobenius: ") + frobenius);
 
+% calculate rmse error
+diff=X_-Y;
+squared_diff=diff.^2;
+mean_squared_diff=mean(squared_diff(:));
+rmse=sqrt(mean_squared_diff);
+disp("rmse: "+rmse);
 
+% calculate ssim index(Structral SiMilarity index)
+ssim_index=ssim(X_, Y);
+disp("ssim: "+ssim_index);
