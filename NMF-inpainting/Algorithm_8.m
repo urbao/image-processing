@@ -1,47 +1,47 @@
-% reset all windows and cmd window, and clear workspace
+% reset all windows and cmd window, and clear all
 clc;
 close all;
 clear all;
 
-%% Define the imshow bands info
-Red_band=18;
-Green_band=8;
-Blue_band=2;
-
 %% load the original unmasked data for comparison
 load("Nevada.mat", 'X');
-figure;
-subplot(1,4,1);
-imshow(X(:,:,[Red_band, Green_band, Blue_band]));
-title("Reference");
-
-%% load the "Data_8.mat" data, and save useful info
 load("Data_8.mat", 'Y_omega');
 rows=size(Y_omega, 1);
 cols=size(Y_omega, 2);
 bands=size(Y_omega, 3);
+
+%% apply mask to Neveda data 'X', and show some info
+%======================================================
+Red_band=18;
+Green_band=8;
+Blue_band=2;
+% show X and Y(masked_X)
+subplot(1,4,1);
+imshow(X(:,:,[Red_band, Green_band, Blue_band]));
+title('Reference');
 subplot(1,4,2);
 imshow(Y_omega(:,:,[Red_band, Green_band, Blue_band]));
-title("Corrupted");
+title('Corrupted');
+%-------------------------------------------------------
 
-%% show some masked-data info
+% show percentage of missing_data
+M=bands;
+L=rows*cols;
 missing_entries=0;
-for rr=1:rows
-    for cc=1:cols
-        for bb=1:bands
-            if Y_omega(rr, cc, bb)==0
+for row_idx=1:rows
+    for col_idx=1:cols
+        for band_idx=1:bands
+            if Y_omega(row_idx, col_idx, band_idx)==0
                 missing_entries=missing_entries+1;
             end
         end
     end
 end
-disp("missing_entries count: "+missing_entries);
-M=bands;
-L=rows*cols;
-missing_precentage=missing_entries/(M*L)*100;
-disp("missing percentage: "+missing_precentage+"%");
+missing_percentage=missing_entries/(M*L)*100;
+disp(("missing entries count: ")+missing_entries);
+disp("missing percentage: "+missing_percentage+"%");
 
-%% reformat the Y_omega matrix into a non-zero value matrix
+%% reformat the Y matrix into a non-zero value matrix
 %========================================================
 % use "any" function create logical zero_cols array
 % first check row dimension, then bands dimension
@@ -53,65 +53,131 @@ Y_rm_stripe=Y_omega(:, ~zero_cols, :);
 imshow(Y_rm_stripe(:,:,[Red_band, Green_band, Blue_band]));
 title("Reformat");
 
+%% create corrupted_col
+corrupted_cols = zeros(1);
+countt = 1;
+for i = 1:cols
+    if zero_cols(1, i) == 1
+        corrupted_cols(1, countt) = i;
+        countt = countt + 1;
+    end
+end
+
+
 %% Plug Y_reformat into the HyperCSI function
 %========================================================
-% count of endmembers (idea from result of diff_N_frob.m)
+% count of endmembers
 N=6;
 % after removing some cols, the Y_reformat cols count changed
 reformat_cols=size(Y_rm_stripe, 2);
 % reshape Y_reformat matrix to (M*L)
-Y_rm_stripe=reshape(Y_rm_stripe, rows*reformat_cols, bands)';
-[A_est, SS_est, time]=HyperCSI(Y_rm_stripe, N);
+Y_rm_stripe_in_matrix=reshape(Y_rm_stripe, rows*reformat_cols, bands)';
+[A_est, S_estt, time]=HyperCSI(Y_rm_stripe_in_matrix, N);
 
-%% Try to find S_est
-% start timer
 tic;
-%========================================================
-% Method: ????
-S_est=zeros(N, rows*cols);
-Y_omega=reshape(Y_omega, rows*cols, bands)';
-% the following variables are used to solve SS_est coefficient
-AAA=zeros(bands,N);
-bbb=zeros(bands,1);
-eqs_counter=0;
-% run through each column of Y_omega matrix to use 
-% any non-zero value to solve SS_est
-for ii=1:rows*cols
-    for jj=1:bands
-        % since Y_omega(jj, ii) is non-zero, so save
-        % Y_omega and A_est value into bbb and AAA matrix
-        if Y_omega(jj, ii)~=0
-            bbb(eqs_counter+1, 1)=Y_omega(jj, ii);
-            for kk=1:N
-                AAA(eqs_counter+1, kk)=A_est(jj, kk);
+S_est = zeros(N, rows*reformat_cols);
+for i = 1:rows*reformat_cols
+    S_est(:, i) = lsqnonneg(A_est, Y_rm_stripe_in_matrix(:, i));
+end
+
+%% reshape S_est to cubic
+
+%recover data to cubic type
+S_cubic = ones(rows, cols, N);
+
+S_est_col = 1;
+
+while S_est_col <= size(S_est, 2)
+
+    for i = 1:cols
+        for j = 1:rows
+            if ~any(corrupted_cols == i)
+                for k = 1:N
+                    S_cubic(j, i, k) = S_est(k ,S_est_col);
+                end
+                S_est_col = S_est_col + 1;
+
             end
-        end
-        % when jj=bands means all bands already recorded
-        % ,which means we can solve the SS_est coefficients
-        if jj==bands
-            sol=pinv(AAA)*bbb;
-            S_est(:, ii)=sol;
-            % after this reset varibles, and break the loop
-            AAA=zeros(bands,N);
-            bbb=zeros(bands,1);
-            eqs_counter=0;
         end
     end
 end
 
-% output the recovered_image
-subplot(1,4,4);
-Y=A_est*S_est;
-Y=reshape(Y', rows, cols, bands);
-imshow(Y(:,:,[Red_band, Green_band, Blue_band]));
-title("Recover");
+%% interpolation
+%test: griddata(x, y, v, xq, yq)
 
-% stop timer, and disp elapsed time
+% create grid
+S_grid = S_cubic;
+
+xx = linspace(1,150,150);  %x, xq            %row
+yy = linspace(1,150,150);  %y_no_precessed   %col
+for j = size(corrupted_cols, 2):-1:1
+    yy(corrupted_cols(j)) = [];  %y
+    S_grid(:, corrupted_cols(j), :) = [];    %Z
+end
+
+[XX, YY] = meshgrid(xx, yy);
+
+yq = corrupted_cols;    %yq
+
+[Xq, Yq] = meshgrid(xx, yq);
+
+S_recover_cubic = zeros(rows);
+
+% start interpolation and store in Sk
+for k = 1:N
+    Sk = reshape(S_grid(:, :, k),150, []); 
+    vq = griddata(XX', YY', Sk, Xq', Yq');
+    
+    for kk = 1:size(corrupted_cols, 2)
+        size_of_Sk = size(Sk, 2);
+        Sk(:, corrupted_cols(1, kk) + 1:size_of_Sk + 1) = Sk(:, corrupted_cols(1, kk):size_of_Sk);
+        
+        Sk(:, corrupted_cols(1, kk)) = vq(:, kk);
+
+    end
+    
+    S_recover_cubic(:, 1:cols, k) = Sk;
+
+end
+
+
+
+% turn S_recover_cubic into N*(rows*cols) matrix
+S_recover = zeros();
+
+m = 1;
+for j = 1:cols
+    for i = 1:rows
+        for k = 1:N
+           S_recover(k, m) = S_recover_cubic(i, j, k); 
+            
+        end
+        m = m + 1;
+    end
+end
+
+
+%% recover Y
+
+Y = A_est * S_recover;
 elapsed_time=toc;
-disp("Elapsed time: "+elapsed_time+"s");
+disp("Elapsed Time: "+elapsed_time+"s");
+subplot(1,4,4);
+Y_show = reshape(Y', rows, cols, bands);
+imshow(Y_show(:,:,[Red_band, Green_band, Blue_band]));
+title('Recovered');
 
-%% Calculate the Frobenius norm of ||X-A_est*SS_est||
-%========================================================
-frob=norm(X-Y, 'fro');
-disp("Frobenius Norm: "+frob);
-disp("========================");
+
+
+X_ = reshape(X, rows*cols, bands)';
+frobenius = 0;
+for i = 1:bands
+    for j = 1:rows*cols
+        frobenius = frobenius + (Y(i, j) - X_(i, j)) .^ 2;
+    end
+end
+
+frobenius = frobenius .^ 0.5;
+disp(("frobenius: ") + frobenius);
+
+
