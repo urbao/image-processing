@@ -111,6 +111,19 @@ disp("Elapsed time: "+elapsed_time+"s");
 
 %% Calculate the Frobenius norm of ||X-A_est*S_est||
 %========================================================
+X=reshape(X, rows*cols, bands)';
+Y=reshape(Y, rows*cols, bands)';
 frob=norm(X-Y, 'fro');
 disp("Frobenius Norm: "+frob);
-disp("========================");
+
+% calculate rmse error
+diff=X-Y;
+squared_diff=diff.^2;
+mean_squared_diff=mean(squared_diff(:));
+rmse=sqrt(mean_squared_diff);
+disp("rmse: "+rmse);
+
+% calculate ssim index(Structral SiMilarity index)
+ssim_index=ssim(Y, X);
+disp("ssim: "+ssim_index);
+

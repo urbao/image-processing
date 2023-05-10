@@ -171,7 +171,7 @@ for i = 1:bands
     end
 end
 
-%% show recovered image, and Frobenius Norm Error
+%% show recovered image, and some common error measurement
 %========================================================
 elapsed_time=toc;
 disp("Elapsed Time: "+elapsed_time+"s");
@@ -199,5 +199,5 @@ rmse=sqrt(mean_squared_diff);
 disp("rmse: "+rmse);
 
 % calculate ssim index(Structral SiMilarity index)
-ssim_index=ssim(X_, Y);
+ssim_index=ssim(Y, X_);
 disp("ssim: "+ssim_index);
