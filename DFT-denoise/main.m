@@ -9,15 +9,21 @@ image=im2double(gray_img);
 
 %% apply noise to double-precision greyscale image
 r=20;
-noisy_img=add_noise(image,r);
+noise_img=add_noise(image,r);
 
 %% apply 2D DFT to original image & noisy_img
-[image_DFT, e_time]=DFT_2D(noisy_img);
-image_DFT_brute_force=fft2(noisy_img);
-image_DFT_brute_force=fftshift(image_DFT_brute_force);
-image_DFT_brute_force=log(1+abs(image_DFT_brute_force));
-image_DFT_brute_force=mat2gray(image_DFT_brute_force);
-[noisy_img_DFT, e_time]=DFT_2D(noisy_img);
+[imageFT, e_time]=DFT_2D(image);
+[noise_imgFT]=DFT_2D(noise_img);
+
+%% apply fftshift(), log() and mat2gray() to images
+% original image part
+imageFT_shift=fftshift(imageFT);
+imageFT_log=log(1+abs(imageFT_shift));
+imageFT_log=mat2gray(imageFT_log);
+% noised image part
+noise_imgFT_shift=fftshift(noise_imgFT);
+noise_imgFT_log=log(1+abs(noise_imgFT_shift));
+noise_imgFT_log=mat2gray(noise_imgFT_log);
 
 %% denoising to remove high-frequency components
 
@@ -28,9 +34,8 @@ image_DFT_brute_force=mat2gray(image_DFT_brute_force);
 %% show all result
 figure;
 subplot(1,4,1), imshow(image);title('Original');
-subplot(1,4,2), imshow(noisy_img);title('Noised');
-subplot(1,4,3), imshow(image_DFT);title('Efficient 2D DFT');
-subplot(1,4,4), imshow(image_DFT_brute_force);title('Brute force 2D DFT');
+subplot(1,4,2), imshow(imageFT_log);title('log FT Original');
+subplot(1,4,3), imshow(noise_imgFT_log);title('log FT Noised');
 
 %% Subprogram 1: implementation of 2D DFT(rearranged, efficient)
 % input: 2D image
@@ -39,13 +44,7 @@ function [output,elpased_time]=DFT_2D(input)
     [rows, cols]=size(input);
     output=zeros(rows, cols);
     tic;
-    % perform 1D DFT on rows
-    for kk=1:rows
-        for mm=1:rows
-            output(mm,:)=input(mm,:)*exp(-1i*2*pi*(kk*mm/rows));
-        end
-    end
-
+    
     elpased_time=toc;
 end
 
@@ -55,14 +54,14 @@ end
 function [output]=IDFT_2D(input)
     [rows, cols]=size(input);
     output=zeros(rows,cols);
-
+    
 end
 
 %% Subprogram 3: implementation of 2D DFT (brute-force)
 % purpose: comapare elapsed_time with the efficient method
 % input: 2D image
 % output: DFT coefficient matrix
-function [output, elasped_time]=DFT_2D_brute_force(input)
+function [output, elapsed_time]=DFT_2D_brute_force(input)
     [rows, cols]=size(input);
     output=zeros(rows, cols);
     tic;
@@ -71,11 +70,11 @@ function [output, elasped_time]=DFT_2D_brute_force(input)
             sum=0;
             for mm=1:rows
                 for nn=1:cols
-                    sum=sum+(input(mm,nn)*(exp(-1i*2*pi*(kk*mm/rows+ll*nn/cols))));
+                    sum=sum+input(mm,nn)*(exp(-1i*2*pi*(kk*mm/rows+ll*nn/cols)));
                 end
             end
             output(kk,ll)=sum;
         end
     end
-    elasped_time=toc;
+    elapsed_time=toc;
 end
