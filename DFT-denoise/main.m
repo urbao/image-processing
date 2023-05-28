@@ -108,7 +108,7 @@ function [output]=DFT_1D(input)
     % compute 1D DFT
     for ii=1:N
         for jj=1:N
-            output(ii)=output(ii)+input(jj)*exp(-1i*2*pi*(ii)*(jj)/N);
+            output(ii)=output(ii)+input(jj)*exp(-1i*2*pi*(ii-1)*(jj-1)/N);
         end
     end
 end
@@ -122,7 +122,7 @@ function [output]=IDFT_1D(input)
     % compute 1D IDFT
     for ii=1:N
         for jj=1:N
-            output(ii)=output(ii)+input(jj)*exp(1i*2*pi*(ii)*(jj)/N);
+            output(ii)=output(ii)+input(jj)*exp(1i*2*pi*(ii-1)*(jj-1)/N);
         end
         % Inverse DFT factor
         output(ii)=output(ii)/N;
