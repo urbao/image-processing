@@ -10,7 +10,7 @@ function [output] = add_noise(input,r)
     filter_1(r:m-r,r:n-r) =1;  % create circle filter and center it
     
         %% Add noise
-    noise_fil = filter_1+1 ==1;
+    noise_fil = filter_1+1==1;
 
     rng(1)
     noise = 500*rand(m,n); 
