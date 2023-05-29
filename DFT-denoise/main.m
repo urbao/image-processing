@@ -29,7 +29,7 @@ e_time1=toc;
 FT_gray_img=fftshift(FT_gray_img);
 log_FT_gray_img=log(1+abs(FT_gray_img));
 log_FT_gray_img=mat2gray(log_FT_gray_img);
-subplot(2,4,3),imshow(log_FT_gray_img);title('log FT Image');
+subplot(2,4,3),imshow(log_FT_gray_img);title('log FT Original Image');
 % noisy gray_img
 FT_noisy_gray_img=fftshift(FT_noisy_gray_img);
 log_FT_noisy_gray_img=log(1+abs(FT_noisy_gray_img));
@@ -223,9 +223,4 @@ function [output]=IDFT_1D(input)
         % Inverse DFT factor
         output(ii)=output(ii)/N;
     end
-end
-
-%% Subprogram 5: implementation of 2D DFT full operations on grayscale-image
-function [e_time1, e_time2]=Demo(gray_img)
-    
 end
