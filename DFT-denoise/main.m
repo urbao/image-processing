@@ -3,13 +3,13 @@ clear all;
 close all;
 
 %% load image and convert to double-precision greyscale
-image=imread('lena.jpg');
+image=imread('cat.jpg');
 image=im2double(image);
 gray_img=rgb2gray(image);
 
 % define add noise size, and create subplot
 r=20;
-figure;
+figure('Name','TA provided noise');
 subplot(2,4,1),imshow(gray_img);title('Original Image');
 
 %% Part 1: Use gray_img to compute 2D DFT
@@ -58,7 +58,7 @@ denoised_img=mat2gray(denoised_img);
 subplot(2,4,7),imshow(denoised_img);title('Denoised Image');
 
 % create high-pass filter to get the outline of original-grayscale-image
-r1=55;
+r1=60;
 filter1=zeros(size(gray_img));
 filter1(r1:rows-r1, r1:cols-r1)=1;
 HP_filter=(filter1~=1);
@@ -72,24 +72,73 @@ subplot(2,4,8), imshow(sharp_img);title('HP Filter Original Image');
 % display info, including SSIM & Frobeniuse Norm
 frob_val=norm(denoised_img-gray_img, 'fro');
 ssim_val=ssim(denoised_img, gray_img);
-rmse_val=0;
 disp("====DFT to Grayscale Image====");
 disp("Frobenius Norm: "+frob_val);
 disp("SSIM Value: "+ssim_val);
 disp("DFT Elapsed Time: "+e_time1+"s");
 disp("IDFT Elapsed Time: "+e_time2+"s");
 
+%% Try to apply MATLAB noise
+%matlab noise
+matlab_noise_img = imnoise(gray_img,"salt & pepper");
+figure('Name','MATLAB built-in noise');
+subplot(2,2,1),imshow(matlab_noise_img);title('matlab Noised Image');
+
+% apply 2D DFT to gray_img & noisy_gray_img
+tic;
+matlab_FT_noisy_gray_img=DFT_2D(matlab_noise_img);
+e_time_matlab_1=toc;
+
+% apply fftshift(),log() and mat2gray() to FT_gray_img & FT_noisy_gray_img
+% noisy gray_img
+matlab_FT_noisy_gray_img=fftshift(matlab_FT_noisy_gray_img);
+matlab_log_FT_noisy_gray_img=log(1+abs(matlab_FT_noisy_gray_img));
+matlab_log_FT_noisy_gray_img=mat2gray(matlab_log_FT_noisy_gray_img);
+subplot(2,2,2),imshow(matlab_log_FT_noisy_gray_img);title('matlab log FT Noised Image');
+
+% apply a filter to remove high-freq components
+r=40;
+[rows, cols]=size(noisy_gray_img);
+filter_1=zeros(rows, cols);
+filter_1(r:rows-r, r:cols-r)=1;
+% apply filter to FT_noisy_gray_img
+matlab_filter_img=filter_1.*matlab_FT_noisy_gray_img;
+matlab_log_filter_img=log(1+abs(matlab_filter_img));
+matlab_log_filter_img=mat2gray(matlab_log_filter_img);
+subplot(2,2,3),imshow(matlab_log_filter_img);title('matlab log FT Filter Image');
+
+% apply 2D IDFT to filter_img
+matlab_filter_img=ifftshift(matlab_filter_img);
+tic;
+matlab_denoised_img=IDFT_2D(matlab_filter_img);
+e_time_matlab_2=toc;
+matlab_denoised_img=real(matlab_denoised_img);
+matlab_denoised_img=mat2gray(matlab_denoised_img);
+subplot(2,2,4),imshow(matlab_denoised_img);title('matlab Denoised Image');
+
+% display info, including SSIM & Frobeniuse Norm
+frob_val=norm(matlab_denoised_img-gray_img, 'fro');
+ssim_val=ssim(matlab_denoised_img, gray_img);
+disp("====DFT to Grayscale Image(MATLAB Noise)====");
+disp("Frobenius Norm: "+frob_val);
+disp("SSIM Value: "+ssim_val);
+disp("DFT Elapsed Time: "+e_time_matlab_1+"s");
+disp("IDFT Elapsed Time: "+e_time_matlab_2+"s");
+
+
+
 %% Part 2: Use RGB image to compute 2D DFT
 % create new figure, and show original image
-figure;
-subplot(2,4,1),imshow(image);title('Original Image');
+figure('Name','DFT to RGB image case');
+subplot(3,4,1),imshow(image);title('Original Image');
 
 % apply noise to image, and save as noisy_img
 noisy_img=zeros(size(image));
+r=20;
 for ii=1:3
     noisy_img(:,:,ii)=add_noise(image(:,:,ii),r);
 end
-subplot(2,4,2),imshow(noisy_img);title('Noised Image');
+subplot(3,4,2),imshow(noisy_img);title('Noised Image');
 
 % apply 2D DFT to image, and see the log grayscale result
 FT_image=zeros(size(image));
@@ -100,7 +149,7 @@ for ii=1:3
     log_FT_img(:,:,ii)=log(1+abs(FT_image(:,:,ii)));
     log_FT_img(:,:,ii)=mat2gray(log_FT_img(:,:,ii));
 end
-subplot(2,4,3),imshow(log_FT_img);title('log FT Original Image');
+subplot(3,4,3),imshow(log_FT_img);title('log FT Original Image');
 
 % apply 2D DFT to noisy_img, and see the log grayscale result
 % noisy_img_shift: used to apply filter
@@ -114,10 +163,10 @@ for ii=1:3
     noisy_img(:,:,ii)=log(1+abs(noisy_img_shift(:,:,ii)));
     noisy_img(:,:,ii)=mat2gray(noisy_img(:,:,ii));
 end
-subplot(2,4,4),imshow(noisy_img);title('log FT Noised Image');
+subplot(3,4,4),imshow(noisy_img);title('log FT Noised Image');
 
 % apply filter to noisy_img_shift
-subplot(2,4,5),imshow(filter);title('Filter');
+subplot(3,4,5),imshow(filter);title('Filter');
 filter_img=zeros(size(image));
 log_filter_img=zeros(size(image));
 for ii=1:3
@@ -125,7 +174,7 @@ for ii=1:3
     log_filter_img(:,:,ii)=log(1+abs(filter_img(:,:,ii)));
     log_filter_img(:,:,ii)=mat2gray(log_filter_img(:,:,ii));
 end
-subplot(2,4,6),imshow(log_filter_img);title('log FT Filter Image');
+subplot(3,4,6),imshow(log_filter_img);title('log FT Filter Image');
 
 % apply 2D IDFT to filter_img to denoise
 denoise_img=zeros(size(image));
@@ -137,7 +186,7 @@ for ii=1:3
     e_time4=e_time4+toc;
     denoise_img(:,:,ii)=real(denoise_img(:,:,ii));
 end
-subplot(2,4,7),imshow(denoise_img); title('Denoised Image');
+subplot(3,4,7),imshow(denoise_img); title('Denoised Image');
 
 % apply high-pass filter to original-RGB-image
 sharp_img=zeros(size(image));
@@ -148,7 +197,7 @@ for ii=1:3
     sharp_img(:,:,ii) = real(sharp_img(:,:,ii));
     sharp_img(:,:,ii) = mat2gray(sharp_img(:,:,ii));
 end
-subplot(2,4,8), imshow(sharp_img);title('HP Filter Original Image');
+subplot(3,4,8), imshow(sharp_img);title('HP Filter Original Image');
 
 % display info, including SSIM & Frobeniuse Norm
 disp("====DFT to RGB Image====");
