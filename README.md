@@ -1,4 +1,4 @@
-# 2023 NCKU Image Processing Homework
+# 2023 NCKU Image Processing Project Code
 
 ### Including several common image-processsing implementation
 
